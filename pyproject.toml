@@ -1,0 +1,61 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "auto"
+dynamic = ["version"]
+description = ''
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "adamjpatterson", email = "adam@farar.net" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = []
+
+[project.urls]
+Documentation = "https://github.com/adamjpatterson/auto#readme"
+Issues = "https://github.com/adamjpatterson/auto/issues"
+Source = "https://github.com/adamjpatterson/auto"
+
+[tool.hatch.version]
+path = "src/auto/__about__.py"
+
+[tool.hatch.envs.types]
+extra-dependencies = [
+  "mypy>=1.0.0",
+]
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:src/auto tests}"
+
+[tool.coverage.run]
+source_pkgs = ["auto", "tests"]
+branch = true
+parallel = true
+omit = [
+  "src/auto/__about__.py",
+]
+
+[tool.coverage.paths]
+auto = ["src/auto", "*/auto/src/auto"]
+tests = ["tests", "*/auto/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
