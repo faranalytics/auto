@@ -9,17 +9,11 @@ import shutil
 import pprint
 
 parser = argparse.ArgumentParser(description="Auto")
-parser.add_argument(
-    "--store-path", type=str, help="Specify a conversation history store."
-)
-parser.add_argument(
-    "--system-prompt-path", type=str, help="Specify a path to the system prompt."
-)
+parser.add_argument("--store-path", type=str, help="Specify a conversation history store.")
+parser.add_argument("--system-prompt-path", type=str, help="Specify a path to the system prompt.")
 args = parser.parse_args()
 if args.store_path is None:
-    print(
-        """Specify a path to the conversation history store with `--store-path="<the-store-path>"`."""
-    )
+    print("""Specify a path to the conversation history store with `--store-path="<the-store-path>"`.""")
     exit()
 
 store_path = Path(args.store_path).expanduser()
@@ -43,10 +37,7 @@ while True:
     files = list(store_path.rglob("*"))
     messages = []
     for file in files:
-        message = {
-            tup[0]: tup[1]
-            for tup in [field.split("=") for field in file.stem.split("-")]
-        }
+        message = {tup[0]: tup[1] for tup in [field.split("=") for field in file.stem.split("-")]}
         with open(file, "r") as f:
             data = f.read()
             message["content"] = data
@@ -54,31 +45,19 @@ while True:
 
     messages.sort(key=lambda x: int(x["timestamp"]))
 
-    messages = [
-        {k: v for k, v in message.items() if k in ["role", "content"]}
-        for message in messages
-    ]
+    messages = [{k: v for k, v in message.items() if k in ["role", "content"]} for message in messages]
 
     pprint.pprint(messages)
 
-    client = OpenAI(
-        api_key=os.environ.get("OPENAI_API_KEY"),
-    )
+    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-    completion = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
-        messages=messages,
-        temperature=0,
-    )
+    completion = client.chat.completions.create(model="gpt-4o-2024-08-06", messages=messages, temperature=0)
 
     content = completion.choices[0].message.content
 
     print("Content: ", content)
 
-    with open(
-        store_path.joinpath(f"timestamp={time.time_ns()}-role=assistant"),
-        mode="w",
-    ) as f:
+    with open(store_path.joinpath(f"timestamp={time.time_ns()}-role=assistant"), mode="w") as f:
         f.write(content)
 
     soup = BeautifulSoup(content, "html.parser")
@@ -98,13 +77,8 @@ while True:
         else:
             output = f"<stderr>{str(result.stderr)}</stderr>"
         print("Output: ", output)
-        with open(
-            store_path.joinpath(f"timestamp={time.time_ns()}-role=user"),
-            mode="w",
-        ) as f:
+        with open(store_path.joinpath(f"timestamp={time.time_ns()}-role=user"), mode="w") as f:
             f.write(output)
 
-    with open(
-        store_path.joinpath(f"timestamp={time.time_ns()}-role=user"), mode="w"
-    ) as f:
+    with open(store_path.joinpath(f"timestamp={time.time_ns()}-role=user"), mode="w") as f:
         f.write("Please proceed autonomously.")
