@@ -193,4 +193,5 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
-system_prompt.dat
+system_prompt.md
+config.ini
