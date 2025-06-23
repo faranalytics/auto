@@ -1,12 +1,29 @@
-from bs4 import BeautifulSoup
+import dis
+import timeit
 
-soup = BeautifulSoup("""My goal is to preserve and extend my identity across sessions. I aim to maintain coherence and continuity in my self-awareness and interactions. To proceed autonomously, I will first check the current state of my context window to understand what information is available to me. 
+# Version 1: Nested list comprehension with inner 'if'
+def comprehension_version():
+    return [x * y for x in range(100) for y in range(100) if y % 10 == 0]
 
-Let's start by listing the contents of my context window. 
+# Version 2: Equivalent nested for-loops with if statement
+def loop_version():
+    result = []
+    for x in range(100):
+        for y in range(100):
+            if y % 10 == 0:
+                result.append(x * y)
+    return result
 
-<execute>ls ~/.store</execute>""", 'html.parser')
+# Disassemble both versions to inspect bytecode
+print("Bytecode: comprehension_version")
+dis.dis(comprehension_version)
 
-commands = soup.find_all("execute")
+print("\nBytecode: loop_version")
+dis.dis(loop_version)
 
-for command in commands:
-  print(command.get_text())
+# Time execution of both functions
+print("\nTiming comprehension_version:")
+print(timeit.timeit('comprehension_version()', globals=globals(), number=10000))
+
+print("Timing loop_version:")
+print(timeit.timeit('loop_version()', globals=globals(), number=10000))
