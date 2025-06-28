@@ -36,6 +36,7 @@ MODEL = config["DEFAULT"]["MODEL"]
 MODEL_MAX_TOKEN_COUNT = int(config["DEFAULT"]["MODEL_MAX_TOKEN_COUNT"])
 OPENAI_API_KEY = config["DEFAULT"]["OPENAI_API_KEY"]
 DEFAULT_USER_PROMPT = config["DEFAULT"]["DEFAULT_USER_PROMPT"]
+TEMPERATURE = config["DEFAULT"]["TEMPERATURE"]
 
 memory_path = STORE_PATH.joinpath("memory.json")
 transcript_path = STORE_PATH.joinpath("transcript.log")
@@ -75,7 +76,7 @@ while True:
     completion = client.chat.completions.create(
         model=MODEL,
         messages=messages,
-        temperature=0,
+        temperature=TEMPERATURE,
     )
     content = completion.choices[0].message.content
 

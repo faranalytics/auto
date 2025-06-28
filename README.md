@@ -1,21 +1,43 @@
 # Auto
 
-[![PyPI - Version](https://img.shields.io/pypi/v/auto.svg)](https://pypi.org/project/auto)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/auto.svg)](https://pypi.org/project/auto)
-
------
-
 ## Table of Contents
 
 - [Installation](#installation)
-- [License](#license)
 
 ## Installation
 
 ```console
-pip install auto
+pip install git+https://github.com/faranalytics/auto.git
 ```
 
-## License
+## Usage
 
-`auto` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.
+### Instructions
+
+#### Create a `config.ini` file.
+
+```ini
+[DEFAULT]
+STORE_PATH = ~/.store
+INIT_SYSTEM_PROMPT_PATH = ./system_prompt.md
+MODEL = gpt-4o-2024-08-06
+MODEL_MAX_TOKEN_COUNT= 128000
+OPENAI_API_KEY =
+DEFAULT_USER_PROMPT = Proceed as you choose.
+TEMPERATURE = 0
+```
+
+#### Run the script.
+
+- Specify the location of the `config.ini` file.
+- The `--init` flag will remove a previous store and create the specified `STORE_PATH` directory.
+
+```bash
+python -m auto --config-path=./config.ini --init
+```
+
+Alternatively, if you omit the `--init` flag, you can run the script while retaining the conversation history in `STORE_PATH`.
+
+```bash
+python -m auto --config-path=./config.ini
+```
