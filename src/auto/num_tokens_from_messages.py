@@ -1,3 +1,5 @@
+# Source: https://cookbook.openai.com/examples/how_to_count_tokens_with_tiktoken
+
 import tiktoken
 
 def num_tokens_from_messages(messages, model="gpt-4o-mini-2024-07-18"):
