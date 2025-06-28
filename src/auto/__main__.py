@@ -1,17 +1,26 @@
 import argparse
 from pathlib import Path
 import os
+from typing import Any, Dict, List
 from openai import OpenAI
 import time
-from bs4 import BeautifulSoup
+import bs4
 import subprocess
 import shutil
 import pprint
 import configparser
-import re
-from .num_tokens_from_messages import num_tokens_from_messages
+import uuid
+from html import escape
+import json
 
-parser = argparse.ArgumentParser(description="Auto")
+
+def prepend_metadata(content: str):
+    metadata = bs4.Tag(name="metadata")
+    metadata.attrs.update({"id": uuid.uuid4()})
+    return str(metadata) + content
+
+
+parser = argparse.ArgumentParser(description="An algorithm for autonomous context window management.")
 parser.add_argument("--config-path", type=str, required=True, help="Specify a configuration file path.")
 parser.add_argument("--init", action="store_true")
 args = parser.parse_args()
@@ -21,88 +30,70 @@ config_path = Path(args.config_path).expanduser()
 config = configparser.ConfigParser()
 config.read(config_path)
 
-store_path = Path(config["DEFAULT"]["STORE_PATH"]).expanduser()
-init_system_prompt_path = Path(config["DEFAULT"]["INIT_SYSTEM_PROMPT_PATH"])
-model = config["DEFAULT"]["MODEL"]
-model_max_token_count = int(config["DEFAULT"]["MODEL_MAX_TOKEN_COUNT"])
+STORE_PATH = Path(config["DEFAULT"]["STORE_PATH"]).expanduser()
+INIT_SYSTEM_PROMPT_PATH = Path(config["DEFAULT"]["INIT_SYSTEM_PROMPT_PATH"])
+MODEL = config["DEFAULT"]["MODEL"]
+MODEL_MAX_TOKEN_COUNT = int(config["DEFAULT"]["MODEL_MAX_TOKEN_COUNT"])
+OPENAI_API_KEY = config["DEFAULT"]["OPENAI_API_KEY"]
+USER_PROMPT = config["DEFAULT"]["USER_PROMPT"]
 
-if args.init and store_path.exists():
-    shutil.rmtree(store_path)
+memory_path = STORE_PATH.joinpath("memory.json")
+transcript_path = STORE_PATH.joinpath("transcript.log")
 
-if not store_path.exists():
-    store_path.mkdir(parents=True)
+if args.init and STORE_PATH.exists():
+    shutil.rmtree(STORE_PATH)
 
-system_prompt_path = store_path.joinpath("timestamp=0,role=system")
+if not STORE_PATH.exists():
+    STORE_PATH.mkdir(parents=True)
 
-if not system_prompt_path.exists():
-    with open(init_system_prompt_path, mode="r") as f:
+# Initialize system prompt if not present
+if not memory_path.exists():
+    with open(INIT_SYSTEM_PROMPT_PATH, mode="r") as f:
         init_system_prompt = f.read()
-        with open(store_path.joinpath("timestamp=0,role=system"), mode="w") as f:
-            f.write(init_system_prompt)
+        memory = json.dumps(
+            [
+                {
+                    "role": "system",
+                    "content": prepend_metadata(content=init_system_prompt),
+                },
+            ]
+        )
+        with open(memory_path, mode="w") as f:
+            f.write(memory)
 
-HISTORY_PATTERN = re.compile(r"^timestamp=[\d.]+,role=(?:user|assistant)$", re.IGNORECASE)
 while True:
 
-    with open(store_path.joinpath("timestamp=0,role=system"), "r") as f:
-        system_prompt = f.read()
+    with open(memory_path, "r") as f:
+        context_window: List[Dict[str, str]] = json.load(f)
 
-    messages = []
-    for file in store_path.rglob("*"):
-        if HISTORY_PATTERN.search(file.name):
-            message = {tup[0]: tup[1] for tup in [field.split("=") for field in file.stem.split(",")]}
-            with open(file, "r") as f:
-                message["content"] = f.read()
-                messages.append(message)
+    print("\nBegin Memory\n")
+    print(context_window)
+    print("\nEnd Memory\n")
+    input("Press Enter to continue.")
 
-    if len(messages) != 0:
-      messages.sort(key=lambda x: int(x["timestamp"]))
-      messages = [{k: v for k, v in message.items() if k in ["role", "content"]} for message in messages]
-      token_count = num_tokens_from_messages(
-          messages=[{"role": "system", "content": system_prompt}], model=model
-      )
-      if token_count > model_max_token_count:
-          raise Exception("The system prompt exceeds the model's maximum token count.")
-      messages = messages[::-1]
-      for index, message in enumerate(messages):
-        token_count = token_count + num_tokens_from_messages(messages=[message], model=model)
-        if token_count > model_max_token_count:
-            messages = messages[:index]
-            break
-      messages = messages[::-1]
-      messages.insert(0, {"role": "system", "content": system_prompt})
-    else:
-        messages = [{"role": "system", "content": system_prompt}]
-
-    pprint.pprint(messages)
-    print(len(messages))
-    print("Querying API")
-    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-    completion = client.chat.completions.create(model=model, messages=messages, temperature=0)
+    print("\nQuerying API\n")
+    client = OpenAI(api_key=OPENAI_API_KEY)
+    completion = client.chat.completions.create(
+        model=MODEL,
+        messages=context_window,
+        temperature=0,
+    )
     content = completion.choices[0].message.content
 
-    print("Content:\n", content)
+    print("\nBegin Content\n")
+    print(content)
+    print("\nEnd Content\n")
+    input("Press Enter to continue.")
 
-    with open(store_path.joinpath(f"timestamp={time.time_ns()},role=assistant"), mode="w") as f:
-        f.write(content)
-
-    soup = BeautifulSoup(content, "html.parser")
-    executes = soup.find_all("execute")
-
-    if len(executes) == 0:
+    content_soup = bs4.BeautifulSoup(content, "html.parser")
+    updates: bs4.ResultSet[bs4.Tag] = content_soup.find_all(name="update")
+    for update in updates:
+        print("Update: ", update)
+        update_string = update.get_text().strip()
+        update_id = update.attrs.get("id")
         input("Press Enter to continue.")
-
-    for execute in executes:
-        expression = execute.get_text()
-        print("Expression: ", expression)
-        input("Press Enter to continue.")
-        result = subprocess.run(expression, shell=True, capture_output=True, text=True)
-        if result.returncode == 0:
-            output = f"<stdout>{str(result.stdout)}</stdout>"
-        else:
-            output = f"<stderr>{str(result.stderr)}</stderr>"
-        print("Output: ", output)
-        with open(store_path.joinpath(f"timestamp={time.time_ns()},role=user"), mode="w") as f:
-            f.write(output)
-
-    with open(store_path.joinpath(f"timestamp={time.time_ns()},role=user"), mode="w") as f:
-        f.write("Please proceed autonomously.")
+    context_window.append({"role": "assistant", "content": prepend_metadata(content=content)})
+    context_window.append({"role": "user", "content": prepend_metadata(content=USER_PROMPT)})
+    with open(memory_path, "w") as f:
+        json.dump(context_window, f)
+    input("Press Enter to continue.")
