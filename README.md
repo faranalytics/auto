@@ -39,7 +39,7 @@ TEMPERATURE = 0
 #### Run the script.
 
 - Specify the location of the `config.ini` file.
-- The `--init` flag will remove a previously initialized message store and create the specified `STORE_PATH` directory.
+- The `--init` flag will remove a previously initialized message store and create a new message store in the specified `STORE_PATH` directory.
 
 ```bash
 python -m auto --config-path=./config.ini --init
