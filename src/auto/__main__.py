@@ -20,12 +20,12 @@ def prepend_metadata(content: str, _id: str = None):
     tag = bs4.Tag(name="metadata")
     tag.attrs.update({"id": _id if _id else str(uuid.uuid4())})
     pattern = r"<metadata.*?</metadata>"
-    if re.search(pattern=pattern,string=content):
-      content = re.sub(
-          pattern=r"<metadata.*?</metadata>",
-          repl=str(tag) + "\n",
-          string=content,
-      )
+    if re.search(pattern=pattern, string=content):
+        content = re.sub(
+            pattern=r"<metadata.*?</metadata>",
+            repl=str(tag) + "\n",
+            string=content,
+        )
     else:
         content = str(tag) + "\n" + content
     return content
@@ -105,13 +105,15 @@ while True:
     )
 
     assistant_message = completion.choices[0].message.content
+    assistant_message = prepend_metadata(content=assistant_message)
     print("\nBegin Content")
     print(assistant_message)
     print("End Content\n")
-    messages.append({"role": "assistant", "content": prepend_metadata(content=assistant_message)})
+    messages.append({"role": "assistant", "content": assistant_message})
+
     user_message = None
-    auto_tag = bs4.BeautifulSoup(assistant_message, "html.parser").find(name="auto")
-    if auto_tag:
+    auto_tags = bs4.BeautifulSoup(assistant_message, "html.parser").find_all(name="auto")
+    for auto_tag in auto_tags:
         for update in auto_tag.find_all(name="update"):
             update_id = update.attrs.get("id")
             for index, message in enumerate(messages):
