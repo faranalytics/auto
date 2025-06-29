@@ -2,14 +2,14 @@
 
 Auto is an autonomous context window management implementation.
 
-## Table of Contents
+## Table of contents
 
 - [Installation](#installation)
 - [Usage](#usage)
 
 ## Installation
 
-```console
+```bash
 pip install git+https://github.com/faranalytics/auto.git
 ```
 
@@ -20,7 +20,6 @@ pip install git+https://github.com/faranalytics/auto.git
 #### Create a `config.ini` file.
 
 ```ini
-[DEFAULT]
 [DEFAULT]
 OPENAI_API_KEY = 
 STORE_PATH = ./store
