@@ -132,15 +132,15 @@ while True:
         if tag:
             user_message = tag.get_text().strip()
     if user_message:
-        message = input(f'Enter a user message or press Enter to use the generated user message: "{user_message}"\n> ')
-        if message:
-            user_message = message
+        user_message = default_user_message + "\n" + user_message
     else:
-        user_message = input(
-            f'Enter a user message or press Enter to use the default user message: "{default_user_message}"\n> '
-        )
-        if not user_message:
-            user_message = default_user_message
+        user_message = default_user_message
+
+    message = input(
+        f"""Enter a user message or press Enter to use the default user message:\n```\n{user_message}\n```\n\n> """
+    )
+    if message:
+        user_message = message
 
     messages.append({"role": "user", "content": prepend_metadata(content=user_message)})
     update_token_count(messages=messages)
