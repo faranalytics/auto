@@ -12,17 +12,13 @@ import configparser
 import uuid
 from html import escape
 import json
-from .num_tokens_from_messages import num_tokens_from_messages
+from .commons import num_tokens_from_messages
 import re
-
-
-def generate_uuid():
-    return str(uuid.uuid4())
 
 
 def prepend_metadata(content: str, _id: str = None):
     metadata = bs4.Tag(name="metadata")
-    metadata.attrs.update({"id": _id if _id else generate_uuid()})
+    metadata.attrs.update({"id": _id if _id else str(uuid.uuid4())})
     return str(metadata) + content
 
 
@@ -57,11 +53,11 @@ config = configparser.ConfigParser()
 config.read(config_path)
 
 STORE_PATH = Path(config["DEFAULT"]["STORE_PATH"]).expanduser()
-INIT_SYSTEM_PROMPT_PATH = Path(config["DEFAULT"]["INIT_SYSTEM_PROMPT_PATH"])
+SYSTEM_MESSAGE_PATH = Path(config["DEFAULT"]["SYSTEM_MESSAGE_PATH"])
 MODEL = config["DEFAULT"]["MODEL"]
 MODEL_MAX_TOKEN_COUNT = int(config["DEFAULT"]["MODEL_MAX_TOKEN_COUNT"])
 OPENAI_API_KEY = config["DEFAULT"]["OPENAI_API_KEY"]
-DEFAULT_USER_PROMPT = config["DEFAULT"]["DEFAULT_USER_PROMPT"]
+DEFAULT_USER_MESSAGE_PATH = config["DEFAULT"]["DEFAULT_USER_MESSAGE_PATH"]
 TEMPERATURE = float(config["DEFAULT"]["TEMPERATURE"])
 
 memory_path = STORE_PATH.joinpath("memory.json")
@@ -72,8 +68,11 @@ if args.init and STORE_PATH.exists():
 if not STORE_PATH.exists():
     STORE_PATH.mkdir(parents=True)
 
+with open(DEFAULT_USER_MESSAGE_PATH, mode="r") as f:
+    default_user_message = f.read()
+
 if not memory_path.exists():
-    with open(INIT_SYSTEM_PROMPT_PATH, mode="r") as f:
+    with open(SYSTEM_MESSAGE_PATH, mode="r") as f:
         init_system_prompt = f.read()
         messages = [{"role": "system", "content": prepend_metadata(content=init_system_prompt)}]
         update_token_count(messages=messages)
@@ -134,7 +133,7 @@ while True:
             user_message = tag.get_text().strip()
 
     if not user_message:
-        user_message = DEFAULT_USER_PROMPT
+        user_message = default_user_message
     message = input(f'Enter a user message or press Enter to use "{user_message}"\n> ')
     if message:
         user_message = message
