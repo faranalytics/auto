@@ -2,6 +2,12 @@
 
 Auto is an autonomous context window management implementation.
 
+## Introduction
+
+One of the challenges in running autonomous agents is management of an ever growing context window.  This implementation gives the agent the capability to manage its context window autonomously.  It is provided tools for discretely deleting and updating messages.
+
+This is an alternative approach to a more conventional function calling framework.
+
 ## Table of contents
 
 - [Installation](#installation)
