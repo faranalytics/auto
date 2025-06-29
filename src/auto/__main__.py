@@ -99,7 +99,7 @@ while True:
     print("\nBegin Content")
     print(assistant_message)
     print("End Content\n")
-
+    messages.append({"role": "assistant", "content": prepend_metadata(content=assistant_message)})
     user_message = None
     auto_tag = bs4.BeautifulSoup(assistant_message, "html.parser").find(name="auto")
     if auto_tag:
@@ -142,7 +142,6 @@ while True:
         if not user_message:
             user_message = default_user_message
 
-    messages.append({"role": "assistant", "content": prepend_metadata(content=assistant_message)})
     messages.append({"role": "user", "content": prepend_metadata(content=user_message)})
     update_token_count(messages=messages)
 

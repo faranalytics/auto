@@ -1,5 +1,7 @@
 # Auto
 
+Auto is an autonomous context window management implementation.
+
 ## Table of Contents
 
 - [Installation](#installation)
