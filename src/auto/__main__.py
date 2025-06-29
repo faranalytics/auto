@@ -131,12 +131,16 @@ while True:
         tag = auto_tag.find(name="user", recursive=False)
         if tag:
             user_message = tag.get_text().strip()
-
-    if not user_message:
-        user_message = default_user_message
-    message = input(f'Enter a user message or press Enter to use "{user_message}"\n> ')
-    if message:
-        user_message = message
+    if user_message:
+        message = input(f'Enter a user message or press Enter to use the generated user message: "{user_message}"\n> ')
+        if message:
+            user_message = message
+    else:
+        user_message = input(
+            f'Enter a user message or press Enter to use the default user message: "{default_user_message}"\n> '
+        )
+        if not user_message:
+            user_message = default_user_message
 
     messages.append({"role": "assistant", "content": prepend_metadata(content=assistant_message)})
     messages.append({"role": "user", "content": prepend_metadata(content=user_message)})
