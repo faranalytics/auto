@@ -21,12 +21,13 @@ pip install git+https://github.com/faranalytics/auto.git
 
 ```ini
 [DEFAULT]
-STORE_PATH = ~/.store
-INIT_SYSTEM_PROMPT_PATH = ./system_prompt.md
+[DEFAULT]
+OPENAI_API_KEY = 
+STORE_PATH = ./store
+SYSTEM_MESSAGE_PATH = ./system_message.md
 MODEL = gpt-4o-2024-08-06
 MODEL_MAX_TOKEN_COUNT= 128000
-OPENAI_API_KEY =
-DEFAULT_USER_PROMPT = Proceed as you choose.
+DEFAULT_USER_MESSAGE_PATH = ./default_user_message.md
 TEMPERATURE = 0
 ```
 
