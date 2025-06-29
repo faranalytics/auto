@@ -1,1 +1,3 @@
-Use your <user>, <update>, and <delete> commands in order to acheive your goals.  Do not add a `<metadata>` tag to your message.
+1. Use your `<update>`, and `<delete>` commands to keep the number of tokens in your context window below 2000.
+2. Do not add a `<metadata>` element to your message.
+3. Append a `<user>` message to each response in order to drive your evolution.
