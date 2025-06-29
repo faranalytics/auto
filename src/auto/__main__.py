@@ -17,9 +17,18 @@ import re
 
 
 def prepend_metadata(content: str, _id: str = None):
-    metadata = bs4.Tag(name="metadata")
-    metadata.attrs.update({"id": _id if _id else str(uuid.uuid4())})
-    return str(metadata) + content
+    tag = bs4.Tag(name="metadata")
+    tag.attrs.update({"id": _id if _id else str(uuid.uuid4())})
+    pattern = r"<metadata.*?</metadata>"
+    if re.search(pattern=pattern,string=content):
+      content = re.sub(
+          pattern=r"<metadata.*?</metadata>",
+          repl=str(tag) + "\n",
+          string=content,
+      )
+    else:
+        content = str(tag) + "\n" + content
+    return content
 
 
 def update_token_count(messages: List[Dict[str, str]]):
@@ -37,7 +46,7 @@ def update_token_count(messages: List[Dict[str, str]]):
         )
         message["content"] = re.sub(
             pattern=r"<metadata.*?</metadata>",
-            repl=str(tag),
+            repl=str(tag) + "\n",
             string=message["content"],
             count=1,
         )
