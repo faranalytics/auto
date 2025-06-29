@@ -195,3 +195,5 @@ cython_debug/
 
 system_prompt.md
 config.ini
+memory.json
+working

@@ -12,14 +12,40 @@ import configparser
 import uuid
 from html import escape
 import json
+from .num_tokens_from_messages import num_tokens_from_messages
+import re
+
 
 def generate_uuid():
     return str(uuid.uuid4())
 
-def prepend_metadata(content: str, id: str = None):
+
+def prepend_metadata(content: str, _id: str = None):
     metadata = bs4.Tag(name="metadata")
-    metadata.attrs.update({"id": id if id else generate_uuid()})
+    metadata.attrs.update({"id": _id if _id else generate_uuid()})
     return str(metadata) + content
+
+
+def update_token_count(messages: List[Dict[str, str]]):
+    cummulative_message_token_count = 0
+    for message in messages:
+        message_token_count = num_tokens_from_messages([message])
+        cummulative_message_token_count = cummulative_message_token_count + message_token_count
+        soup = bs4.BeautifulSoup(message["content"], "html.parser")
+        tag = soup.find(name="metadata")
+        tag.attrs.update(
+            {
+                "message_token_count": message_token_count,
+                "cummulative_message_token_count": cummulative_message_token_count,
+            },
+        )
+        message["content"] = re.sub(
+            pattern=r"<metadata.*?</metadata>",
+            repl=str(tag),
+            string=message["content"],
+            count=1,
+        )
+
 
 parser = argparse.ArgumentParser(description="An algorithm for autonomous context window management.")
 parser.add_argument("--config-path", type=str, required=True, help="Specify a configuration file path.")
@@ -39,7 +65,6 @@ DEFAULT_USER_PROMPT = config["DEFAULT"]["DEFAULT_USER_PROMPT"]
 TEMPERATURE = float(config["DEFAULT"]["TEMPERATURE"])
 
 memory_path = STORE_PATH.joinpath("memory.json")
-transcript_path = STORE_PATH.joinpath("transcript.log")
 
 if args.init and STORE_PATH.exists():
     shutil.rmtree(STORE_PATH)
@@ -50,11 +75,10 @@ if not STORE_PATH.exists():
 if not memory_path.exists():
     with open(INIT_SYSTEM_PROMPT_PATH, mode="r") as f:
         init_system_prompt = f.read()
-        memory = [
-            {"role": "system", "content": prepend_metadata(content=init_system_prompt)}
-        ]
+        messages = [{"role": "system", "content": prepend_metadata(content=init_system_prompt)}]
+        update_token_count(messages=messages)
         with open(memory_path, mode="w") as f:
-            json.dump(memory, f)
+            json.dump(messages, f)
 
 while True:
     with open(memory_path, "r") as f:
@@ -72,55 +96,52 @@ while True:
         temperature=TEMPERATURE,
     )
 
-    content = completion.choices[0].message.content
+    assistant_message = completion.choices[0].message.content
     print("\nBegin Content")
-    print(content)
+    print(assistant_message)
     print("End Content\n")
 
-    autonomy_soup = bs4.BeautifulSoup(content, "html.parser").find(name="autonomy")
-    if autonomy_soup:
-      for update in autonomy_soup.find_all(name="update"):
-          update_id = update.attrs.get("id")
-          for index, message in enumerate(messages):
-              soup = bs4.BeautifulSoup(message["content"], "html.parser")
-              tag = soup.find(name="metadata", attrs={"id": update_id})
-              if tag:
-                  messages[index]["content"] = str(tag) + update.get_text().strip()
+    user_message = None
+    auto_tag = bs4.BeautifulSoup(assistant_message, "html.parser").find(name="auto")
+    if auto_tag:
+        for update in auto_tag.find_all(name="update"):
+            update_id = update.attrs.get("id")
+            for index, message in enumerate(messages):
+                soup = bs4.BeautifulSoup(message["content"], "html.parser")
+                tag = soup.find(name="metadata", attrs={"id": update_id})
+                if tag:
+                    messages[index]["content"] = str(tag) + update.get_text().strip()
 
-      for delete in autonomy_soup.find_all(name="delete"):
-          delete_id = delete.attrs.get("id")
-          messages = [m for m in messages if not bs4.BeautifulSoup(m["content"], "html.parser").find(name="metadata", attrs={"id": delete_id})]
+        for delete in auto_tag.find_all(name="delete"):
+            delete_id = delete.attrs.get("id")
+            for index, message in enumerate(messages):
+                soup = bs4.BeautifulSoup(message["content"], "html.parser")
+                tag = soup.find(name="metadata", attrs={"id": delete_id})
+                if tag:
+                    del messages[index]
+                    break
 
-      for execute in autonomy_soup.find_all(name="execute"):
-          command = execute.get_text().strip()
-          try:
-              output = subprocess.check_output(command, shell=True, text=True)
-          except subprocess.CalledProcessError as e:
-              output = f"Error: {e}"
-          messages.append({"role": "system", "content": prepend_metadata(f"Executed: {command}\nOutput:\n{output}")})
+        # for execute in auto_soup.find_all(name="execute"):
+        #     command = execute.get_text().strip()
+        #     try:
+        #         output = subprocess.check_output(command, shell=True, text=True)
+        #     except subprocess.CalledProcessError as e:
+        #         output = f"Error: {e}"
+        #     messages.append({"role": "system", "content": prepend_metadata(f"Executed: {command}\nOutput:\n{output}")})
 
-      user_override = None
-      user_tag = autonomy_soup.find(name="user", recursive=False)
-      if user_tag:
-          user_override = user_tag.get_text().strip()
+        tag = auto_tag.find(name="user", recursive=False)
+        if tag:
+            user_message = tag.get_text().strip()
 
-      messages.append({"role": "assistant", "content": content})
-    else:
-        user_override = None
+    if not user_message:
+        user_message = DEFAULT_USER_PROMPT
+    message = input(f'Enter a user message or press Enter to use "{user_message}"\n> ')
+    if message:
+        user_message = message
 
-    if user_override:
-        user_prompt = user_override
-        print(f"User prompt overridden by assistant: {user_prompt}")
-        input("Press Enter to continue.")
-    else:
-        user_prompt = input(f"Enter a user message or press Enter to use the default user message: \"{DEFAULT_USER_PROMPT}\"\n> ")
-        if not user_prompt:
-            user_prompt = DEFAULT_USER_PROMPT
-
-    messages.append({"role": "user", "content": prepend_metadata(content=user_prompt)})
+    messages.append({"role": "assistant", "content": prepend_metadata(content=assistant_message)})
+    messages.append({"role": "user", "content": prepend_metadata(content=user_message)})
+    update_token_count(messages=messages)
 
     with open(memory_path, "w") as f:
         json.dump(messages, f)
-
-    with open(transcript_path, "a") as f:
-        f.write(f"{content}\n\n")
