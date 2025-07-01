@@ -1,3 +1,5 @@
+import logging
+import traceback
 from typing import Dict, List
 import argparse
 import shutil
@@ -10,6 +12,8 @@ from openai import OpenAI
 import bs4
 
 from .commons import num_tokens_from_messages
+
+logging.basicConfig(encoding="utf-8", level=logging.DEBUG)
 
 
 def prepend_metadata_to_content(content: str):
@@ -79,82 +83,88 @@ def construct_user_message(user_tag: bs4.Tag, default_user_message: str):
 
 
 if __name__ == "__main__":
+    try:
+        parser = argparse.ArgumentParser(description="An algorithm for autonomous context window management.")
+        parser.add_argument("--config-path", type=str, required=True, help="Specify a configuration file path.")
+        parser.add_argument(
+            "--init", action="store_true", help="Delete the message store and create a new message store."
+        )
+        args = parser.parse_args()
 
-    parser = argparse.ArgumentParser(description="An algorithm for autonomous context window management.")
-    parser.add_argument("--config-path", type=str, required=True, help="Specify a configuration file path.")
-    parser.add_argument("--init", action="store_true", help="Delete the message store and create a new message store.")
-    args = parser.parse_args()
+        config_path = Path(args.config_path).expanduser()
+        if not config_path.is_file():
+            raise Exception(f"{config_path} not found.")
+        config = configparser.ConfigParser()
+        config.read(config_path)
 
-    config_path = Path(args.config_path).expanduser()
-    config = configparser.ConfigParser()
-    config.read(config_path)
+        STORE_PATH = Path(config["DEFAULT"]["STORE_PATH"]).expanduser()
+        SYSTEM_MESSAGE_PATH = Path(config["DEFAULT"]["SYSTEM_MESSAGE_PATH"]).expanduser()
+        MODEL = config["DEFAULT"]["MODEL"]
+        OPENAI_API_KEY = config["DEFAULT"]["OPENAI_API_KEY"]
+        DEFAULT_USER_MESSAGE_PATH = Path(config["DEFAULT"]["DEFAULT_USER_MESSAGE_PATH"]).expanduser()
+        TEMPERATURE = float(config["DEFAULT"]["TEMPERATURE"])
 
-    STORE_PATH = Path(config["DEFAULT"]["STORE_PATH"]).expanduser()
-    SYSTEM_MESSAGE_PATH = Path(config["DEFAULT"]["SYSTEM_MESSAGE_PATH"]).expanduser()
-    MODEL = config["DEFAULT"]["MODEL"]
-    OPENAI_API_KEY = config["DEFAULT"]["OPENAI_API_KEY"]
-    DEFAULT_USER_MESSAGE_PATH = Path(config["DEFAULT"]["DEFAULT_USER_MESSAGE_PATH"]).expanduser()
-    TEMPERATURE = float(config["DEFAULT"]["TEMPERATURE"])
+        memory_path = STORE_PATH.joinpath("memory.json")
 
-    memory_path = STORE_PATH.joinpath("memory.json")
+        if args.init and STORE_PATH.exists():
+            shutil.rmtree(STORE_PATH)
 
-    if args.init and STORE_PATH.exists():
-        shutil.rmtree(STORE_PATH)
+        if not STORE_PATH.exists():
+            STORE_PATH.mkdir(parents=True)
 
-    if not STORE_PATH.exists():
-        STORE_PATH.mkdir(parents=True)
+        with open(DEFAULT_USER_MESSAGE_PATH, mode="r") as f:
+            default_user_message = f.read()
 
-    with open(DEFAULT_USER_MESSAGE_PATH, mode="r") as f:
-        default_user_message = f.read()
+        # Create a memory.json if one doesn't already exist.
+        if not memory_path.exists():
+            with open(SYSTEM_MESSAGE_PATH, mode="r") as f:
+                init_system_prompt = f.read()
+                messages = [{"role": "system", "content": prepend_metadata_to_content(content=init_system_prompt)}]
+                update_token_count(messages=messages)
+                with open(memory_path, mode="w") as f:
+                    json.dump(messages, f)
 
-    # Create a memory.json if one doesn't already exist.
-    if not memory_path.exists():
-        with open(SYSTEM_MESSAGE_PATH, mode="r") as f:
-            init_system_prompt = f.read()
-            messages = [{"role": "system", "content": prepend_metadata_to_content(content=init_system_prompt)}]
+        while True:
+            with open(memory_path, "r") as f:
+                messages: List[Dict[str, str]] = json.load(f)
+
+            print("Memory:")
+            pprint.pprint(messages)
+
+            print("Querying api...")
+            client = OpenAI(api_key=OPENAI_API_KEY)
+            completion = client.chat.completions.create(
+                model=MODEL,
+                messages=messages,
+                temperature=TEMPERATURE,
+            )
+
+            assistant_message = completion.choices[0].message.content
+            assistant_message = prepend_metadata_to_content(content=assistant_message)
+            print("Assistant message:")
+            print(assistant_message)
+            soup = bs4.BeautifulSoup(markup=assistant_message, features="html.parser")
+            delete_tags: bs4.ResultSet[bs4.Tag] = soup.find_all(name="delete", recursive=False)
+            update_tags: bs4.ResultSet[bs4.Tag] = soup.find_all(name="update", recursive=False)
+            user_tag: bs4.Tag = soup.find(name="user", recursive=False)
+            messages = delete_messages(messages, delete_tags)
+            messages = update_messages(messages, update_tags)
+            user_message = construct_user_message(user_tag=user_tag, default_user_message=default_user_message)
+            message = input(
+                f"""\nEnter a user message or press Enter to use the default user message:\n```\n{user_message}\n```\n\n> """
+            )
+            if message:
+                user_message = message
+
+            for tag in [*delete_tags, *update_tags, user_tag]:
+                tag.decompose()
+
+            messages.append({"role": "assistant", "content": str(soup)})
+            messages.append({"role": "user", "content": prepend_metadata_to_content(content=user_message)})
+
             update_token_count(messages=messages)
-            with open(memory_path, mode="w") as f:
+
+            with open(memory_path, "w") as f:
                 json.dump(messages, f)
-
-    while True:
-        with open(memory_path, "r") as f:
-            messages: List[Dict[str, str]] = json.load(f)
-
-        print("Memory:")
-        pprint.pprint(messages)
-
-        print("Querying api...")
-        client = OpenAI(api_key=OPENAI_API_KEY)
-        completion = client.chat.completions.create(
-            model=MODEL,
-            messages=messages,
-            temperature=TEMPERATURE,
-        )
-
-        assistant_message = completion.choices[0].message.content
-        assistant_message = prepend_metadata_to_content(content=assistant_message)
-        print("Assistant message:")
-        print(assistant_message)
-        soup = bs4.BeautifulSoup(markup=assistant_message, features="html.parser")
-        delete_tags: bs4.ResultSet[bs4.Tag] = soup.find_all(name="delete", recursive=False)
-        update_tags: bs4.ResultSet[bs4.Tag] = soup.find_all(name="update", recursive=False)
-        user_tag: bs4.Tag = soup.find(name="user", recursive=False)
-        messages = delete_messages(messages, delete_tags)
-        messages = update_messages(messages, update_tags)
-        user_message = construct_user_message(user_tag=user_tag, default_user_message=default_user_message)
-        message = input(
-            f"""\nEnter a user message or press Enter to use the default user message:\n```\n{user_message}\n```\n\n> """
-        )
-        if message:
-            user_message = message
-
-        for tag in [*delete_tags, *update_tags, user_tag]:
-            tag.decompose()
-
-        messages.append({"role": "assistant", "content": str(soup)})
-        messages.append({"role": "user", "content": prepend_metadata_to_content(content=user_message)})
-
-        update_token_count(messages=messages)
-
-        with open(memory_path, "w") as f:
-            json.dump(messages, f)
+    except Exception as e:
+        logging.error(traceback.format_exc())
