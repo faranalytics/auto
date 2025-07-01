@@ -13,7 +13,7 @@ import bs4
 
 from .commons import num_tokens_from_messages
 
-logging.basicConfig(encoding="utf-8", level=logging.DEBUG)
+logging.basicConfig(encoding="utf-8", level=logging.INFO)
 
 
 def prepend_metadata_to_content(content: str):
@@ -157,7 +157,8 @@ if __name__ == "__main__":
                 user_message = message
 
             for tag in [*delete_tags, *update_tags, user_tag]:
-                tag.decompose()
+                if tag:
+                    tag.decompose()
 
             messages.append({"role": "assistant", "content": str(soup)})
             messages.append({"role": "user", "content": prepend_metadata_to_content(content=user_message)})
