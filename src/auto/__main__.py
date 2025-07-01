@@ -14,47 +14,46 @@ from html import escape
 import json
 from .commons import num_tokens_from_messages
 import re
+import logging
 
 
-def prepend_metadata(content: str, _id: str = None):
-    tag = bs4.Tag(name="metadata")
-    tag.attrs.update({"id": _id if _id else str(uuid.uuid4())})
-    pattern = r"<metadata.*?</metadata>"
-    if re.search(pattern=pattern, string=content):
-        content = re.sub(
-            pattern=r"<metadata.*?</metadata>",
-            repl=str(tag) + "\n",
-            string=content,
-        )
-    else:
-        content = str(tag) + "\n" + content
-    return content
+def prepend_metadata_to_content(content: str):
+    """
+    Parse and prepend a <metadata> tag to the content.
+    """
+    soup = bs4.BeautifulSoup(content, "html.parser")
+    tag: bs4.ResultSet[bs4.Tag] = soup.find("metadata")
+    if not tag:  
+      tag = bs4.Tag(name="metadata", attrs={"id": uuid.uuid4()})
+      soup.insert(0, tag)
+    return str(soup)
 
 
 def update_token_count(messages: List[Dict[str, str]]):
+    """
+    Update the message_token_count and cummulative_message_token_count of each item in the list.
+    """
     cummulative_message_token_count = 0
     for message in messages:
         message_token_count = num_tokens_from_messages([message])
         cummulative_message_token_count = cummulative_message_token_count + message_token_count
         soup = bs4.BeautifulSoup(message["content"], "html.parser")
         tag = soup.find(name="metadata")
+        if not tag:
+            tag = bs4.Tag(name="metadata", attrs={"id": uuid.uuid4()})
+            soup.insert(0, tag)
         tag.attrs.update(
             {
                 "message_token_count": message_token_count,
                 "cummulative_message_token_count": cummulative_message_token_count,
             },
         )
-        message["content"] = re.sub(
-            pattern=r"<metadata.*?</metadata>",
-            repl=str(tag) + "\n",
-            string=message["content"],
-            count=1,
-        )
+        message["content"] = str(soup)
 
 
 parser = argparse.ArgumentParser(description="An algorithm for autonomous context window management.")
 parser.add_argument("--config-path", type=str, required=True, help="Specify a configuration file path.")
-parser.add_argument("--init", action="store_true")
+parser.add_argument("--init", action="store_true", help="Delete the message store and create a new message store.")
 args = parser.parse_args()
 
 config_path = Path(args.config_path).expanduser()
@@ -80,10 +79,11 @@ if not STORE_PATH.exists():
 with open(DEFAULT_USER_MESSAGE_PATH, mode="r") as f:
     default_user_message = f.read()
 
+# Create a memory.json if one doesn't already exist.
 if not memory_path.exists():
     with open(SYSTEM_MESSAGE_PATH, mode="r") as f:
         init_system_prompt = f.read()
-        messages = [{"role": "system", "content": prepend_metadata(content=init_system_prompt)}]
+        messages = [{"role": "system", "content": prepend_metadata_to_content(content=init_system_prompt)}]
         update_token_count(messages=messages)
         with open(memory_path, mode="w") as f:
             json.dump(messages, f)
@@ -92,11 +92,10 @@ while True:
     with open(memory_path, "r") as f:
         messages: List[Dict[str, str]] = json.load(f)
 
-    print("\nBegin Memory\n")
+    print("Memory:")
     pprint.pprint(messages)
-    print("\nEnd Memory")
 
-    print("Querying API\n")
+    print("Querying api...")
     client = OpenAI(api_key=OPENAI_API_KEY)
     completion = client.chat.completions.create(
         model=MODEL,
@@ -105,45 +104,42 @@ while True:
     )
 
     assistant_message = completion.choices[0].message.content
-    assistant_message = prepend_metadata(content=assistant_message)
-    print("\nBegin Content")
+    assistant_message = prepend_metadata_to_content(content=assistant_message)
+    print("Assistant message:")
     print(assistant_message)
-    print("End Content\n")
-    messages.append({"role": "assistant", "content": assistant_message})
 
     user_message = None
-    auto_tags = bs4.BeautifulSoup(assistant_message, "html.parser").find_all(name="auto")
-    for auto_tag in auto_tags:
-        for update in auto_tag.find_all(name="update"):
-            update_id = update.attrs.get("id")
-            for index, message in enumerate(messages):
-                soup = bs4.BeautifulSoup(message["content"], "html.parser")
-                tag = soup.find(name="metadata", attrs={"id": update_id})
-                if tag:
-                    messages[index]["content"] = str(tag) + update.get_text().strip()
+    soup = bs4.BeautifulSoup(assistant_message, "html.parser")
+    tags: bs4.ResultSet[bs4.Tag] = soup.find_all(name="update", recursive=False)
+    for update in tags:
+        update_id = update.attrs.get("id")
+        for index, message in enumerate(messages):
+            soup = bs4.BeautifulSoup(message["content"], "html.parser")
+            tag = soup.find(name="metadata", attrs={"id": update_id})
+            if tag:
+                messages[index]["content"] = str(tag) + update.get_text().strip()
 
-        for delete in auto_tag.find_all(name="delete"):
-            delete_id = delete.attrs.get("id")
-            for index, message in enumerate(messages):
-                soup = bs4.BeautifulSoup(message["content"], "html.parser")
-                tag = soup.find(name="metadata", attrs={"id": delete_id})
-                if tag:
-                    del messages[index]
-                    break
+    tags: bs4.ResultSet[bs4.Tag] = soup.find_all(name="delete", recursive=False)
+    for delete in tags:
+        delete_id = delete.attrs.get("id")
+        for index, message in enumerate(messages):
+            soup = bs4.BeautifulSoup(message["content"], "html.parser")
+            tag = soup.find(name="metadata", attrs={"id": delete_id})
+            if tag:
+                del messages[index]
+                break
 
-        # for execute in auto_soup.find_all(name="execute"):
-        #     command = execute.get_text().strip()
-        #     try:
-        #         output = subprocess.check_output(command, shell=True, text=True)
-        #     except subprocess.CalledProcessError as e:
-        #         output = f"Error: {e}"
-        #     messages.append({"role": "system", "content": prepend_metadata(f"Executed: {command}\nOutput:\n{output}")})
+    # for execute in auto_soup.find_all(name="execute"):
+    #     command = execute.get_text().strip()
+    #     try:
+    #         output = subprocess.check_output(command, shell=True, text=True)
+    #     except subprocess.CalledProcessError as e:
+    #         output = f"Error: {e}"
+    #     messages.append({"role": "system", "content": prepend_metadata(f"Executed: {command}\nOutput:\n{output}")})
 
-        tag = auto_tag.find(name="user", recursive=False)
-        if tag:
-            user_message = tag.get_text().strip()
-    if user_message:
-        user_message = default_user_message + "\n" + user_message
+    tag = soup.find(name="user", recursive=False)
+    if tag:
+        user_message = tag.get_text().strip()
     else:
         user_message = default_user_message
 
@@ -152,8 +148,10 @@ while True:
     )
     if message:
         user_message = message
+    
+    messages.append({"role": "assistant", "content": str(soup)})
+    messages.append({"role": "user", "content": prepend_metadata_to_content(content=user_message)})
 
-    messages.append({"role": "user", "content": prepend_metadata(content=user_message)})
     update_token_count(messages=messages)
 
     with open(memory_path, "w") as f:
