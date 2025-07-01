@@ -110,8 +110,8 @@ while True:
     for update in tags:
         update_id = update.attrs.get("id")
         for index, message in enumerate(messages):
-            soup = bs4.BeautifulSoup(message["content"], "html.parser")
-            tag = soup.find(name="metadata", attrs={"id": update_id})
+            update_soup = bs4.BeautifulSoup(message["content"], "html.parser")
+            tag = update_soup.find(name="metadata", attrs={"id": update_id})
             if tag:
                 messages[index]["content"] = str(tag) + update.get_text().strip()
 
@@ -119,8 +119,8 @@ while True:
     for delete in tags:
         delete_id = delete.attrs.get("id")
         for index, message in enumerate(messages):
-            soup = bs4.BeautifulSoup(message["content"], "html.parser")
-            tag = soup.find(name="metadata", attrs={"id": delete_id})
+            delete_soup = bs4.BeautifulSoup(message["content"], "html.parser")
+            tag = delete_soup.find(name="metadata", attrs={"id": delete_id})
             if tag:
                 del messages[index]
                 break
