@@ -17,9 +17,9 @@ def prepend_metadata_to_content(content: str):
     Parse and prepend a &lt;metadata&gt; tag to the content.
     """
     soup = bs4.BeautifulSoup(content, "html.parser")
-    tag: bs4.Tag = soup.find("metadata")
+    tag: bs4.Tag = soup.find("metadata", recursive=False)
     if not tag:
-        tag = bs4.Tag(name="metadata", attrs={"id": str(uuid.uuid4())})
+        tag = soup.new_tag(name="metadata", attrs={"id": str(uuid.uuid4())})
         soup.insert(0, tag)
     return str(soup)
 
@@ -33,9 +33,9 @@ def update_token_count(messages: List[Dict[str, str]]):
         message_token_count = num_tokens_from_messages([message])
         cumulative_message_token_count = cumulative_message_token_count + message_token_count
         soup = bs4.BeautifulSoup(message["content"], "html.parser")
-        tag = soup.find(name="metadata")
+        tag = soup.find(name="metadata", recursive=False)
         if not tag:
-            tag = bs4.Tag(name="metadata", attrs={"id": str(uuid.uuid4())})
+            tag = soup.new_tag(name="metadata", attrs={"id": str(uuid.uuid4())})
             soup.insert(0, tag)
         tag.attrs.update(
             {
@@ -52,9 +52,10 @@ def delete_messages(messages: List[Dict[str, str]], delete_tags: bs4.ResultSet[b
     for message in messages:
         soup = bs4.BeautifulSoup(message["content"], "html.parser")
         metadata_tag = soup.find(name="metadata", recursive=False)
-        metadata_tag_id = metadata_tag.attrs.get("id")
-        if not metadata_tag_id in delete_ids:
-            filtered_messages.append(message)
+        if metadata_tag:
+            metadata_tag_id = metadata_tag.attrs.get("id")
+            if not metadata_tag_id in delete_ids:
+                filtered_messages.append(message)
     return filtered_messages
 
 
@@ -63,7 +64,7 @@ def update_messages(messages: List[Dict[str, str]], update_tags: bs4.ResultSet[b
         update_id = update_tag.attrs.get("id")
         for index, message in enumerate(messages):
             soup = bs4.BeautifulSoup(message["content"], "html.parser")
-            metadata_tag = soup.find(name="metadata", attrs={"id": update_id})
+            metadata_tag = soup.find(name="metadata", attrs={"id": update_id}, recursive=False)
             if metadata_tag:
                 messages[index]["content"] = str(metadata_tag) + update_tag.decode_contents()
     return messages
@@ -147,7 +148,7 @@ if __name__ == "__main__":
         if message:
             user_message = message
 
-        for tag in [*delete_tags, *update_tags]:
+        for tag in [*delete_tags, *update_tags, user_tag]:
             tag.decompose()
 
         messages.append({"role": "assistant", "content": str(soup)})
