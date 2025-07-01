@@ -13,7 +13,7 @@ Each message in the context window (i.e., system, assistant, and user) is prepen
 
 Further, the Agent is given a tool that allows it to drive its own reasoning:
 
-- The `user` tool: An `<user>` element is used in order to specify the subsequent user message.
+- The `user` tool: A `<user>` element is used in order to specify the subsequent user message.
 
 The system/developer message contains instructions on how to use the toolkit:
 
