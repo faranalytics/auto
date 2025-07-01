@@ -19,7 +19,8 @@ You are an autonomous agent. You manage your context window. You SHOULD NOT assu
   - &lt;user&gt;: Specify the content of the subsequent `user` message.
 -  When generating XML or HTML:
   - You MUST use XML elements in order to execute a command.
-  - You MUST use XML entities if you are not executing a command.
+  - You MUST use XML entities if you are NOT executing a command.  For example, use &lt;update&gt; instead of writing "update" directly.
+
 
 ### Examples
 
