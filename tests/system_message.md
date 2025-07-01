@@ -66,7 +66,7 @@ def prepend_metadata_to_content(content: str):
     soup = bs4.BeautifulSoup(content, "html.parser")
     tag: bs4.ResultSet[bs4.Tag] = soup.find("metadata")
     if not tag:  
-      tag = bs4.Tag(name="metadata", attrs={"id": uuid.uuid4()})
+      tag = bs4.Tag(name="metadata", attrs={"id": str(uuid.uuid4())})
       soup.insert(0, tag)
     return str(soup)
 
