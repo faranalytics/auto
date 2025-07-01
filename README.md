@@ -6,10 +6,14 @@ Auto is an autonomous context window management implementation.
 
 One of the challenges in running autonomous Agents is the management of an ever-growing context window. This implementation gives the Agent the capability to manage its context window autonomously. 
 
-Each message in the context window (i.e., system, assistant, and user) are prepended with a `<metadata>` tag that contains an `id` attribute assigned to a unique identifier.  This unique identifier allows the Agent to reference messages in its context window using one of its tools:
+Each message in the context window (i.e., system, assistant, and user) are prepended with a `<metadata>` tag that contains an `id` attribute assigned to a unique identifier.  This unique identifier allows the Agent to reference and manage messages in its context window using one of its tools:
 
 - The `update` tool: An `<update>` element is used in order to update the contents of a specified message.
 - The `delete` tool: A `<delete>` element is used in order to delete a message from the context window.
+
+Further, the Agent is given a tool that allows it to drive its own reasoning:
+
+- The `user` tool: An `<user>` element is used in order to specify the subsequent user message.
 
 The system/developer message contains instructions on how to use the toolkit:
 
