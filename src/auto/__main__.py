@@ -78,6 +78,7 @@ def construct_user_message(user_tag: bs4.Tag, default_user_message: str):
 
 
 if __name__ == "__main__":
+
     parser = argparse.ArgumentParser(description="An algorithm for autonomous context window management.")
     parser.add_argument("--config-path", type=str, required=True, help="Specify a configuration file path.")
     parser.add_argument("--init", action="store_true", help="Delete the message store and create a new message store.")
