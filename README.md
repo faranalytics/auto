@@ -4,9 +4,9 @@ Auto is an autonomous context window management implementation.
 
 ## Introduction
 
-One of the challenges in running autonomous Agents is the management of an ever-growing context window. This implementation gives the Agent the capability to manage its context window autonomously. 
+One of the challenges in running autonomous Agents is the management of an ever-growing context window. This implementation gives the Agent the capability to manage its context window autonomously.
 
-Each message in the context window (i.e., system, assistant, and user) is prepended with a `<metadata>` tag that contains an `id` attribute assigned to a unique identifier.  This unique identifier allows the Agent to reference and manage messages in its context window using one of its tools:
+Each message in the context window (i.e., system, assistant, and user) is prepended with a `<metadata>` tag that contains an `id` attribute assigned to a unique identifier. This unique identifier allows the Agent to reference and manage messages in its context window using one of its tools:
 
 - The `update` tool: An `<update>` element is used in order to update the contents of a specified message in the context window.
 - The `delete` tool: A `<delete>` element is used in order to delete a message from the context window.
@@ -53,4 +53,46 @@ The system/developer message contains instructions on how to use the toolkit:
 **Specify the content of the subsequent `user` message:**
 
 <user>Reflect on something.</user>
+```
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Usage](#usage)
+
+## Installation
+
+```bash
+pip install git+https://github.com/faranalytics/auto.git
+```
+
+## Usage
+
+### Instructions
+
+#### Create a `config.ini` file.
+
+```ini
+[DEFAULT]
+OPENAI_API_KEY =
+STORE_PATH = ./store
+SYSTEM_MESSAGE_PATH = ./system_message.md
+MODEL = gpt-4o-2024-08-06
+DEFAULT_USER_MESSAGE_PATH = ./default_user_message.md
+TEMPERATURE = 0
+```
+
+#### Run the script.
+
+- Specify the location of the `config.ini` file.
+- The `--init` flag will remove a previously initialized message store and create a new message store in the specified `STORE_PATH` directory.
+
+```bash
+python -m auto --config-path=./config.ini --init
+```
+
+Alternatively, if you omit the `--init` flag, you can run the script while retaining the conversation history in `STORE_PATH`.
+
+```bash
+python -m auto --config-path=./config.ini
 ```
