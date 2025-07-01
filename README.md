@@ -4,14 +4,14 @@ Auto is an autonomous context window management implementation.
 
 ## Introduction
 
-One of the challenges in running autonomous Agents is the management of an ever-growing context window. This implementation gives the Agent the capability to manage its context window autonomously.
+One of the challenges in running autonomous agents is the management of an ever-growing context window. This implementation gives the agent the capability to manage its context window autonomously.
 
-Each message in the context window (i.e., system, assistant, and user) is prepended with a `<metadata>` tag that contains an `id` attribute assigned to a unique identifier. This unique identifier allows the Agent to reference and manage messages in its context window using one of its tools:
+Each message in the context window (i.e., system, assistant, and user) is prepended with a `<metadata>` tag that contains an `id` attribute assigned to a unique identifier. This unique identifier allows the agent to reference and manage messages in its context window using one of its tools:
 
 - The `update` tool: An `<update>` element is used in order to update the contents of a specified message in the context window.
 - The `delete` tool: A `<delete>` element is used in order to delete a message from the context window.
 
-Further, the Agent is given a tool that allows it to drive its own reasoning:
+Further, the agent is given a tool that allows it to drive its own reasoning:
 
 - The `user` tool: A `<user>` element is used in order to specify the subsequent user message.
 
@@ -70,7 +70,7 @@ pip install git+https://github.com/faranalytics/auto.git
 
 ### Instructions
 
-#### Clone the respository.
+#### Clone the repository.
 
 ```bash
 git clone https://github.com/faranalytics/auto.git
