@@ -8,7 +8,6 @@ import shutil
 import pprint
 import configparser
 import uuid
-from html import escape
 import json
 from .commons import num_tokens_from_messages
 
