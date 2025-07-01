@@ -3,9 +3,7 @@ from pathlib import Path
 import os
 from typing import Any, Dict, List
 from openai import OpenAI
-import time
 import bs4
-import subprocess
 import shutil
 import pprint
 import configparser
@@ -13,8 +11,6 @@ import uuid
 from html import escape
 import json
 from .commons import num_tokens_from_messages
-import re
-import logging
 
 
 def prepend_metadata_to_content(content: str):
@@ -128,14 +124,6 @@ while True:
             if tag:
                 del messages[index]
                 break
-
-    # for execute in auto_soup.find_all(name="execute"):
-    #     command = execute.get_text().strip()
-    #     try:
-    #         output = subprocess.check_output(command, shell=True, text=True)
-    #     except subprocess.CalledProcessError as e:
-    #         output = f"Error: {e}"
-    #     messages.append({"role": "system", "content": prepend_metadata(f"Executed: {command}\nOutput:\n{output}")})
 
     tag = soup.find(name="user", recursive=False)
     if tag:
