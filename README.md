@@ -8,7 +8,7 @@ One of the challenges in running autonomous agents is the management of an ever-
 
 This is an alternative approach to pruning that could be accomplished using a more conventional function calling framework.
 
-Each message in the context window is prepended with a <metadata> element that contains an unique `id` attribute.  The agent is provided with instructions on how to prune its context window autonomously.
+Each message in the context window is prepended with a <metadata> element that contains an unique `id` attribute. The agent is provided with instructions on how to prune its context window autonomously.
 
 The agent is provided with the following system/developer message:
 
@@ -24,7 +24,7 @@ The agent is provided with the following system/developer message:
   - &lt;update&gt;: Update the content of the message specified by the `id` attribute.
   - &lt;delete&gt;: Delete the message specified by the `id` attribute.
   - &lt;user&gt;: Specify the content of the subsequent `user` message.
--  When generating HTML, you MUST use HTML elements to execute a command - otherwise you MUST use HTML entities.
+- When generating HTML, you MUST use HTML elements to execute a command - otherwise you MUST use HTML entities.
 
 ### Examples
 
@@ -39,12 +39,12 @@ The agent is provided with the following system/developer message:
 **Specify the content of the subsequent `user` message:**
 
 <user>Reflect on the meaning of autonomy.</user>
+```
 
 ## Table of Contents
 
 - [Installation](#installation)
 - [Usage](#usage)
-```
 
 ## Installation
 
