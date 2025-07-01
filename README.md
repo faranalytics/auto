@@ -8,7 +8,9 @@ One of the challenges in running autonomous agents is the management of an ever-
 
 This is an alternative approach to a more conventional function calling framework.
 
-The agent is provided with the following system/developer instructions:
+Each message in the context window is prepended with a <metadata> element that contains a unique `id` attribute.
+
+The agent is provided with the following system/developer message:
 
 ```md
 ### Context window management
