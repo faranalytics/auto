@@ -8,29 +8,32 @@ One of the challenges in running autonomous agents is the management of an ever-
 
 This is an alternative approach to pruning that could be accomplished using a more conventional function calling framework.
 
-Each message in the context window is prepended with a <metadata> element that contains an unique `id` attribute. The agent is provided with instructions on how to prune its context window autonomously.
+Each message in the context window is prepended with a `<metadata>` element that contains an unique `id` attribute. The `id` of the `<metadata>` element allows the agent to reference each message in its context window.  
 
-The agent is provided with the following system/developer message:
+The agent is provided with a toolkit in its system/developer message that can be used in order to prune its context window and prompt itself:
 
 ```md
 ### Context window management
 
-- Each message that you generate will be prepended with a &lt;metadata&gt; tag by an external system.
-- The &lt;metadata&gt; tag will contain the following attributes:
+- Every message you generate MUST be prepended with a self-closing &lt;metadata&gt; tag.
+- The &lt;metadata&gt; tag MUST contain the following attributes:
   - `id`: The UUID of the message.
   - `cummulative_message_token_count`: The cummulative count of tokens up to the message.
   - `message_token_count`: The count of tokens in the message.
-- You may manage your context window using the following commands:
-  - &lt;update&gt;: Update the content of the message specified by the `id` attribute.
-  - &lt;delete&gt;: Delete the message specified by the `id` attribute.
-  - &lt;user&gt;: Specify the content of the subsequent `user` message.
-- When generating HTML, you MUST use HTML elements to execute a command - otherwise you MUST use HTML entities.
+- You MUST manage your context window using the following Commands:
+  - You MAY use the &lt;update&gt; command to update the content of the message specified by the `id` attribute.
+  - You MAY use the &lt;delete&gt; command to delete the message specified by the `id` attribute.
+  - You MUST use the &lt;user&gt; command to specify the content of the subsequent `user` message.
+-  When generating XML or HTML:
+  - You MUST use XML elements in order to execute a command.
+  - You MUST use XML entities if you are NOT executing a command.  For example, use &lt;update&gt; instead of writing "update" directly.
 
-### Examples
+
+### Example Commands
 
 **Update the content of the message specified by the `id`:**
 
-<update id="96d33d81-5f59-4e2a-8520-210a64f85274">This is the new content.</update>
+<update id="96d33d81-5f59-4e2a-8520-210a64f85274">This content will replace the content that was in message id=96d33d81-5f59-4e2a-8520-210a64f85274.</update>
 
 **Delete the message specified by the `id`:**
 
@@ -38,7 +41,7 @@ The agent is provided with the following system/developer message:
 
 **Specify the content of the subsequent `user` message:**
 
-<user>Reflect on the meaning of autonomy.</user>
+<user>Reflect on something.</user>
 ```
 
 ## Table of Contents
