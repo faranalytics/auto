@@ -13,7 +13,7 @@ from .commons import num_tokens_from_messages
 
 def prepend_metadata_to_content(content: str):
     """
-    Parse and prepend a <metadata> tag to the content.
+    Parse and prepend a &lt;metadata&gt; tag to the content.
     """
     soup = bs4.BeautifulSoup(content, "html.parser")
     tag: bs4.Tag = soup.find("metadata")
@@ -25,12 +25,12 @@ def prepend_metadata_to_content(content: str):
 
 def update_token_count(messages: List[Dict[str, str]]):
     """
-    Update the message_token_count and cummulative_message_token_count of each item in the list.
+    Update the message_token_count and cumulative_message_token_count of each item in the list.
     """
-    cummulative_message_token_count = 0
+    cumulative_message_token_count = 0
     for message in messages:
         message_token_count = num_tokens_from_messages([message])
-        cummulative_message_token_count = cummulative_message_token_count + message_token_count
+        cumulative_message_token_count = cumulative_message_token_count + message_token_count
         soup = bs4.BeautifulSoup(message["content"], "html.parser")
         tag = soup.find(name="metadata")
         if not tag:
@@ -39,7 +39,7 @@ def update_token_count(messages: List[Dict[str, str]]):
         tag.attrs.update(
             {
                 "message_token_count": message_token_count,
-                "cummulative_message_token_count": cummulative_message_token_count,
+                "cumulative_message_token_count": cumulative_message_token_count,
             },
         )
         message["content"] = str(soup)

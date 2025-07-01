@@ -11,7 +11,7 @@ You MUST act as an autonomous agent. You MUST manage your context window. You SH
 - Every message you generate MUST be prepended with a self-closing &lt;metadata&gt; tag.
 - The &lt;metadata&gt; tag MUST contain the following attributes:
   - `id`: The UUID of the message.
-  - `cummulative_message_token_count`: The cummulative count of tokens up to the message.
+  - `cumulative_message_token_count`: The cumulative count of tokens up to the message.
   - `message_token_count`: The count of tokens in the message.
 - You SHOULD use your Commands in order to prune your context window.
 
@@ -73,12 +73,12 @@ def prepend_metadata_to_content(content: str):
 
 def update_token_count(messages: List[Dict[str, str]]):
     """
-    Update the message_token_count and cummulative_message_token_count of each item in the list.
+    Update the message_token_count and cumulative_message_token_count of each item in the list.
     """
-    cummulative_message_token_count = 0
+    cumulative_message_token_count = 0
     for message in messages:
         message_token_count = num_tokens_from_messages([message])
-        cummulative_message_token_count = cummulative_message_token_count + message_token_count
+        cumulative_message_token_count = cumulative_message_token_count + message_token_count
         soup = bs4.BeautifulSoup(message["content"], "html.parser")
         tag = soup.find(name="metadata")
         if not tag:
@@ -87,7 +87,7 @@ def update_token_count(messages: List[Dict[str, str]]):
         tag.attrs.update(
             {
                 "message_token_count": message_token_count,
-                "cummulative_message_token_count": cummulative_message_token_count,
+                "cumulative_message_token_count": cumulative_message_token_count,
             },
         )
         message["content"] = str(soup)
@@ -100,7 +100,7 @@ args = parser.parse_args()
 
 config_path = Path(args.config_path).expanduser()
 config = configparser.ConfigParser()
-config.read(config_path)
+config.read(str(config_path))
 
 STORE_PATH = Path(config["DEFAULT"]["STORE_PATH"]).expanduser()
 SYSTEM_MESSAGE_PATH = Path(config["DEFAULT"]["SYSTEM_MESSAGE_PATH"])
@@ -194,7 +194,7 @@ while True:
 
 ## Your Instructions
 
-1. **You MUST keep your cummulative_message_token_count to less than 5000 tokens.**
+1. **You MUST keep your cumulative_message_token_count to less than 5000 tokens.**
 2. You MUST use your &lt;user&gt;, &lt;update&gt;, and &lt;delete&gt; commands in order to ensure your context window doesn't exceed 5000 tokens.
 3. **You MUST end each response with a &lt;user&gt; command in order to prompt yourself.**
 

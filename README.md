@@ -18,7 +18,7 @@ The agent is provided with a toolkit in its system/developer message that can be
 - Every message you generate MUST be prepended with a self-closing &lt;metadata&gt; tag.
 - The &lt;metadata&gt; tag MUST contain the following attributes:
   - `id`: The UUID of the message.
-  - `cummulative_message_token_count`: The cummulative count of tokens up to the message.
+  - `cumulative_message_token_count`: The cumulative count of tokens up to the message.
   - `message_token_count`: The count of tokens in the message.
 - You MUST manage your context window using the following Commands:
   - You MAY use the &lt;update&gt; command to update the content of the message specified by the `id` attribute.
