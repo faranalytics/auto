@@ -82,13 +82,13 @@ git clone https://github.com/faranalytics/auto.git
 cd auto
 ```
 
-#### Pip install the repository in editable mode.
+#### Pip install the project in editable mode.
 
 ```bash
 pip install -e .
 ```
 
-#### Change directory into the `test` directory.
+#### Change directory into the `tests` directory.
 
 ```bash
 cd tests
