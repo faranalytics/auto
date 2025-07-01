@@ -8,7 +8,7 @@ One of the challenges in running autonomous agents is the management of an ever-
 
 This is an alternative approach to a more conventional function calling framework.
 
-Each message in the context window is prepended with a <metadata> element that contains a unique `id` attribute.
+Each message in the context window is prepended with a <metadata> element that contains an unique `id` attribute.  The agent is provided with instructions on how to prune its context window autonomously.
 
 The agent is provided with the following system/developer message:
 
