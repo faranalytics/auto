@@ -70,6 +70,32 @@ pip install git+https://github.com/faranalytics/auto.git
 
 ### Instructions
 
+#### Clone the respository.
+
+```bash
+git clone https://github.com/faranalytics/auto.git
+```
+
+#### Change directory into the repository.
+
+```bash
+cd auto
+```
+
+#### Pip install the repository in editable mode.
+
+```bash
+pip install -e .
+```
+
+#### Change directory into the `test` directory.
+
+```bash
+cd tests
+```
+
+In the `tests` directory you will find a suitable system message and default user message.
+
 #### Create a `config.ini` file.
 
 ```ini
