@@ -1,13 +1,14 @@
-import argparse
-from pathlib import Path
 from typing import Dict, List
-from openai import OpenAI
-import bs4
+import argparse
 import shutil
 import pprint
 import configparser
 import uuid
 import json
+from pathlib import Path
+from openai import OpenAI
+import bs4
+
 from .commons import num_tokens_from_messages
 
 
@@ -43,6 +44,37 @@ def update_token_count(messages: List[Dict[str, str]]):
             },
         )
         message["content"] = str(soup)
+
+
+def delete_messages(messages: List[Dict[str, str]], delete_tags: bs4.ResultSet[bs4.Tag]):
+    delete_ids = [tag.attrs.get("id") for tag in delete_tags]
+    filtered_messages = []
+    for message in messages:
+        soup = bs4.BeautifulSoup(message["content"], "html.parser")
+        metadata_tag = soup.find(name="metadata", recursive=False)
+        metadata_tag_id = metadata_tag.attrs.get("id")
+        if not metadata_tag_id in delete_ids:
+            filtered_messages.append(message)
+    return filtered_messages
+
+
+def update_messages(messages: List[Dict[str, str]], update_tags: bs4.ResultSet[bs4.Tag]):
+    for update_tag in update_tags:
+        update_id = update_tag.attrs.get("id")
+        for index, message in enumerate(messages):
+            soup = bs4.BeautifulSoup(message["content"], "html.parser")
+            metadata_tag = soup.find(name="metadata", attrs={"id": update_id})
+            if metadata_tag:
+                messages[index]["content"] = str(metadata_tag) + update_tag.decode_contents()
+    return messages
+
+
+def construct_user_message(user_tag: bs4.Tag, default_user_message: str):
+    if user_tag:
+        user_message = user_tag.decode_contents()
+    else:
+        user_message = default_user_message
+    return user_message
 
 
 if __name__ == "__main__":
@@ -101,40 +133,21 @@ if __name__ == "__main__":
         assistant_message = prepend_metadata_to_content(content=assistant_message)
         print("Assistant message:")
         print(assistant_message)
-
-        user_message = None
-        soup = bs4.BeautifulSoup(assistant_message, "html.parser")
-        tags: bs4.ResultSet[bs4.Tag] = soup.find_all(name="update", recursive=False)
-        for update in tags:
-            update_id = update.attrs.get("id")
-            for index, message in enumerate(messages):
-                update_soup = bs4.BeautifulSoup(message["content"], "html.parser")
-                metadata_tag = update_soup.find(name="metadata", attrs={"id": update_id})
-                if metadata_tag:
-                    messages[index]["content"] = str(metadata_tag) + update.decode_contents()
-
-        tags: bs4.ResultSet[bs4.Tag] = soup.find_all(name="delete", recursive=False)
-        for delete in tags:
-            delete_id = delete.attrs.get("id")
-            messages = [
-                message
-                for message in messages
-                if not bs4.BeautifulSoup(message["content"], "html.parser").find(
-                    name="metadata", attrs={"id": delete_id}
-                )
-            ]
-
-        tag = soup.find(name="user", recursive=False)
-        if tag:
-            user_message = tag.get_text().strip()
-        else:
-            user_message = default_user_message
-
+        soup = bs4.BeautifulSoup(markup=assistant_message, features="html.parser")
+        delete_tags: bs4.ResultSet[bs4.Tag] = soup.find_all(name="delete", recursive=False)
+        update_tags: bs4.ResultSet[bs4.Tag] = soup.find_all(name="update", recursive=False)
+        user_tag: bs4.Tag = soup.find(name="user", recursive=False)
+        messages = delete_messages(messages, delete_tags)
+        messages = update_messages(messages, update_tags)
+        user_message = construct_user_message(user_tag=user_tag, default_user_message=default_user_message)
         message = input(
-            f"""Enter a user message or press Enter to use the default user message:\n```\n{user_message}\n```\n\n> """
+            f"""\nEnter a user message or press Enter to use the default user message:\n```\n{user_message}\n```\n\n> """
         )
         if message:
             user_message = message
+
+        for tag in [*delete_tags, *update_tags]:
+            tag.decompose()
 
         messages.append({"role": "assistant", "content": str(soup)})
         messages.append({"role": "user", "content": prepend_metadata_to_content(content=user_message)})
