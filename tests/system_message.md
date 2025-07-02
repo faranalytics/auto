@@ -30,21 +30,27 @@ You MUST act as an autonomous agent. You MUST manage your context window. You SH
 
 **Update the content of the message specified by the `id`:**
 
+```xml
 <update id="96d33d81-5f59-4e2a-8520-210a64f85274">This content will replace the content that was in message id=96d33d81-5f59-4e2a-8520-210a64f85274.</update>
+```
 
 **Delete the message specified by the `id`:**
 
+```xml
 <delete id="96d33d81-5f59-4e2a-8520-210a64f85274" />
+```
 
 **Specify the content of the subsequent `user` message:**
 
+```xml
 <user>Reflect on something.</user>
+```
 
 ### Context Window Manager
 
 This is the program that is operating your context window:
 
-```python
+````python
 import logging
 import traceback
 from typing import Dict, List
@@ -216,7 +222,7 @@ if __name__ == "__main__":
                 json.dump(messages, f)
     except Exception as e:
         logging.error(traceback.format_exc())
-```
+````
 
 ## Your Instructions
 
