@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "auto"
 dynamic = ["version"]
-description = ''
+description = 'An autonomous context window management implementation.'
 readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
