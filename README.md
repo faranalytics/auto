@@ -97,7 +97,7 @@ cd tests
 
 In the `tests` directory you will find a suitable system message and default user message.
 
-#### Create a `config.ini` file.
+#### Create a `config.ini` file in the `tests` directory.
 
 ```ini
 [DEFAULT]
