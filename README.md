@@ -1,6 +1,6 @@
-# Auto
+# Auto: A simple recursive self-prompting implementation written in Python
 
-Auto is an autonomous context window management implementation.
+Auto is an educational/demonstrational recursive self-prompting implementation that demonstrates autonomous context window management.
 
 ## Introduction
 
