@@ -25,7 +25,7 @@ Further, the agent is given a tool that allows it to drive its own reasoning:
 
 - The `user` tool: A `<user>` element is used in order to specify the subsequent user message.
 
-The system/developer message contains instructions on how to use the toolkit:
+The system/developer message is provided to the model that contains instructions on how to use the toolkit:
 
 Excerpted from [`./tests/system_message.md`](https://github.com/faranalytics/auto/blob/main/tests/system_message.md).
 
