@@ -4,7 +4,7 @@ Auto is an **educational/demonstrational** recursive self-prompting implementati
 
 # Introduction
 
-This implementation gives the model the capability to manage its context window autonomously. It also allows the model prompt itself using recursive self-prompting.
+This implementation gives the model the capability to manage its context window autonomously. It also allows the model to prompt itself using recursive self-prompting.
 
 ## Table of Contents
 
