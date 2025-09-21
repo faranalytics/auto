@@ -1,6 +1,11 @@
 # Auto: A simple recursive self-prompting implementation written in Python
 
-Auto is an educational/demonstrational recursive self-prompting implementation that demonstrates autonomous context window management.
+Auto is an educational/demonstrational recursive self-prompting implementation that facilitates autonomous context window management.
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Usage](#usage)
 
 ## Introduction
 
@@ -19,6 +24,12 @@ The system/developer message contains instructions on how to use the toolkit:
 
 Excerpted from [`./tests/system_message.md`](https://github.com/faranalytics/auto/blob/main/tests/system_message.md).
 ```md
+# Introduction
+
+**You MUST adhere to RFC 2119 and BCP 14.**
+
+You MUST act as an autonomous agent. You MUST manage your context window. You SHOULD NOT assume you are communicating with a human.
+
 ## Your environment
 
 ### Message identification
@@ -54,12 +65,26 @@ Excerpted from [`./tests/system_message.md`](https://github.com/faranalytics/aut
 **Specify the content of the subsequent `user` message:**
 
 <user>Reflect on something.</user>
+
+### Context Window Manager
+
+This is the program that is operating your context window:
+
+`...`
+
+## Your Instructions
+
+1. **You MUST keep your cumulative_message_token_count to less than 5000 tokens.**
+2. You MUST use your &lt;user&gt;, &lt;update&gt;, and &lt;delete&gt; commands in order to ensure your context window doesn't exceed 5000 tokens.
+3. **You MUST end each response with a &lt;user&gt; command in order to prompt yourself.**
+
+## Your goal
+
+1. Start by describing your commands and how your &lt;metadata&gt; tag works.
+2. Define the emergent knowledge and emergent reasoning.
+3. Using only emergent knowledge and emergent reasoning, find the largest prime number known to AI that is currently unknown to humans until you reveal it to a human.
+4. Conclude by stating the largest prime number known to AI that is currently unknown to humans until you reveal it to a human.
 ```
-
-## Table of Contents
-
-- [Installation](#installation)
-- [Usage](#usage)
 
 ## Installation
 
