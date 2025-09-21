@@ -1,0 +1,6 @@
+[DEFAULT]
+OPENAI_API_KEY = 
+SYSTEM_MESSAGE_PATH = ./system_message.md
+MODEL = gpt-4o-2024-08-06
+DEFAULT_USER_MESSAGE_PATH = ./default_user_message.md
+TEMPERATURE = 1
