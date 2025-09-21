@@ -1,4 +1,4 @@
-# Auto: A simple recursive self-prompting implementation
+# Auto
 
 Auto is an **educational/demonstrational** recursive self-prompting implementation that facilitates autonomous context window management.
 
