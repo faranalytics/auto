@@ -1,9 +1,10 @@
 # Auto: A simple recursive self-prompting implementation written in Python
 
-Auto is an educational/demonstrational recursive self-prompting implementation that facilitates autonomous context window management.
+Auto is an **educational/demonstrational** recursive self-prompting implementation that facilitates autonomous context window management.
 
 ## Table of Contents
 
+- [Introduction](#introduction)
 - [Installation](#installation)
 - [Usage](#usage)
 
@@ -23,6 +24,7 @@ Further, the agent is given a tool that allows it to drive its own reasoning:
 The system/developer message contains instructions on how to use the toolkit:
 
 Excerpted from [`./tests/system_message.md`](https://github.com/faranalytics/auto/blob/main/tests/system_message.md).
+
 ```md
 # Introduction
 
