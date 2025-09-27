@@ -14,7 +14,7 @@ This implementation gives the model the capability to manage its context window 
 
 ## How it works
 
-One of the challenges in running autonomous agents is the management of an ever-growing context window. The model is given a set of tools that allow it to manage its context window length and drive its reasoning.
+A challenge in running autonomous agents is the management of an ever-growing context window. In this implementation the model is given a set of tools that allow it to manage its context window length _and_ drive its reasoning.
 
 Each message in the context window (i.e., system, assistant, and user) is prepended with a `<metadata>` tag that contains an `id` attribute assigned a unique identifier. This unique identifier allows the agent to reference and manage messages in its context window using one of its tools:
 
