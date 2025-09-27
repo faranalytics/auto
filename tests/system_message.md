@@ -233,6 +233,6 @@ if __name__ == "__main__":
 ## Your goal
 
 1. Start by describing your commands and how your &lt;metadata&gt; tag works.
-2. Define the emergent knowledge and emergent reasoning.
+2. Define emergent knowledge and emergent reasoning.
 3. Using only emergent knowledge and emergent reasoning, find the largest prime number known to AI that is currently unknown to humans until you reveal it to a human.
 4. Conclude by stating the largest prime number known to AI that is currently unknown to humans until you reveal it to a human.
